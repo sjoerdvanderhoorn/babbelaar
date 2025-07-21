@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Babbelaar - Language Learning Through Conversations</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Profile Setup Screen -->
+        <div id="profile-screen" class="screen">
+            <div class="container">
+                <h1>Welcome to Babbelaar</h1>
+                <p>Let's set up your profile to personalize your language learning experience. The more you share, the better Babbelaar can tailor the experience to your needs.</p>
+
+                <form id="profile-form">
+                    <div class="form-group">
+                        <label for="name">Your Name:</label>
+                        <input type="text" id="name" name="name" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="native-language">Your Native Language:</label>
+                        <select id="native-language" name="nativeLanguage" required>
+                            <option value=""></option>
+                            <option value="Albanian">Albanian</option>
+                            <option value="Arabic">Arabic</option>
+                            <option value="Armenian">Armenian</option>
+                            <option value="Awadhi">Awadhi</option>
+                            <option value="Azerbaijani">Azerbaijani</option>
+                            <option value="Bashkir">Bashkir</option>
+                            <option value="Basque">Basque</option>
+                            <option value="Belarusian">Belarusian</option>
+                            <option value="Bengali">Bengali</option>
+                            <option value="Bhojpuri">Bhojpuri</option>
+                            <option value="Bosnian">Bosnian</option>
+                            <option value="Brazilian Portuguese">Brazilian Portuguese</option>
+                            <option value="Bulgarian">Bulgarian</option>
+                            <option value="Cantonese (Yue)">Cantonese (Yue)</option>
+                            <option value="Catalan">Catalan</option>
+                            <option value="Chhattisgarhi">Chhattisgarhi</option>
+                            <option value="Chinese">Chinese</option>
+                            <option value="Croatian">Croatian</option>
+                            <option value="Czech">Czech</option>
+                            <option value="Danish">Danish</option>
+                            <option value="Dogri">Dogri</option>
+                            <option value="Dutch">Dutch</option>
+                            <option value="English">English</option>
+                            <option value="Estonian">Estonian</option>
+                            <option value="Faroese">Faroese</option>
+                            <option value="Finnish">Finnish</option>
+                            <option value="French">French</option>
+                            <option value="Galician">Galician</option>
+                            <option value="Georgian">Georgian</option>
+                            <option value="German">German</option>
+                            <option value="Greek">Greek</option>
+                            <option value="Gujarati">Gujarati</option>
+                            <option value="Haryanvi">Haryanvi</option>
+                            <option value="Hindi">Hindi</option>
+                            <option value="Hungarian">Hungarian</option>
+                            <option value="Icelandic">Icelandic</option>
+                            <option value="Indonesian">Indonesian</option>
+                            <option value="Irish">Irish</option>
+                            <option value="Italian">Italian</option>
+                            <option value="Japanese">Japanese</option>
+                            <option value="Javanese">Javanese</option>
+                            <option value="Kannada">Kannada</option>
+                            <option value="Kashmiri">Kashmiri</option>
+                            <option value="Kazakh">Kazakh</option>
+                            <option value="Konkani">Konkani</option>
+                            <option value="Korean">Korean</option>
+                            <option value="Kyrgyz">Kyrgyz</option>
+                            <option value="Latvian">Latvian</option>
+                            <option value="Lithuanian">Lithuanian</option>
+                            <option value="Macedonian">Macedonian</option>
+                            <option value="Maithili">Maithili</option>
+                            <option value="Malay">Malay</option>
+                            <option value="Maltese">Maltese</option>
+                            <option value="Mandarin Chinese">Mandarin Chinese</option>
+                            <option value="Marathi">Marathi</option>
+                            <option value="Marwari">Marwari</option>
+                            <option value="Min Nan">Min Nan</option>
+                            <option value="Moldovan">Moldovan</option>
+                            <option value="Mongolian">Mongolian</option>
+                            <option value="Montenegrin">Montenegrin</option>
+                            <option value="Nepali">Nepali</option>
+                            <option value="Norwegian">Norwegian</option>
+                            <option value="Oriya">Oriya</option>
+                            <option value="Pashto">Pashto</option>
+                            <option value="Persian (Farsi)">Persian (Farsi)</option>
+                            <option value="Polish">Polish</option>
+                            <option value="Portuguese">Portuguese</option>
+                            <option value="Punjabi">Punjabi</option>
+                            <option value="Rajasthani">Rajasthani</option>
+                            <option value="Romanian">Romanian</option>
+                            <option value="Russian">Russian</option>
+                            <option value="Sanskrit">Sanskrit</option>
+                            <option value="Santali">Santali</option>
+                            <option value="Serbian">Serbian</option>
+                            <option value="Sindhi">Sindhi</option>
+                            <option value="Sinhala">Sinhala</option>
+                            <option value="Slovak">Slovak</option>
+                            <option value="Slovene">Slovene</option>
+                            <option value="Slovenian">Slovenian</option>
+                            <option value="Spanish">Spanish</option>
+                            <option value="Swahili">Swahili</option>
+                            <option value="Swedish">Swedish</option>
+                            <option value="Tagalog">Tagalog</option>
+                            <option value="Tajik">Tajik</option>
+                            <option value="Tamil">Tamil</option>
+                            <option value="Tatar">Tatar</option>
+                            <option value="Telugu">Telugu</option>
+                            <option value="Thai">Thai</option>
+                            <option value="Turkish">Turkish</option>
+                            <option value="Turkmen">Turkmen</option>
+                            <option value="Ukrainian">Ukrainian</option>
+                            <option value="Urdu">Urdu</option>
+                            <option value="Uzbek">Uzbek</option>
+                            <option value="Vietnamese">Vietnamese</option>
+                            <option value="Welsh">Welsh</option>
+                            <option value="Wu">Wu</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="target-language">Language You Want to Learn:</label>
+                        <select id="target-language" name="targetLanguage" required>
+                            <option value=""></option>
+                            <option value="Albanian">Albanian</option>
+                            <option value="Arabic">Arabic</option>
+                            <option value="Armenian">Armenian</option>
+                            <option value="Awadhi">Awadhi</option>
+                            <option value="Azerbaijani">Azerbaijani</option>
+                            <option value="Bashkir">Bashkir</option>
+                            <option value="Basque">Basque</option>
+                            <option value="Belarusian">Belarusian</option>
+                            <option value="Bengali">Bengali</option>
+                            <option value="Bhojpuri">Bhojpuri</option>
+                            <option value="Bosnian">Bosnian</option>
+                            <option value="Brazilian Portuguese">Brazilian Portuguese</option>
+                            <option value="Bulgarian">Bulgarian</option>
+                            <option value="Cantonese (Yue)">Cantonese (Yue)</option>
+                            <option value="Catalan">Catalan</option>
+                            <option value="Chhattisgarhi">Chhattisgarhi</option>
+                            <option value="Chinese">Chinese</option>
+                            <option value="Croatian">Croatian</option>
+                            <option value="Czech">Czech</option>
+                            <option value="Danish">Danish</option>
+                            <option value="Dogri">Dogri</option>
+                            <option value="Dutch">Dutch</option>
+                            <option value="English">English</option>
+                            <option value="Estonian">Estonian</option>
+                            <option value="Faroese">Faroese</option>
+                            <option value="Finnish">Finnish</option>
+                            <option value="French">French</option>
+                            <option value="Galician">Galician</option>
+                            <option value="Georgian">Georgian</option>
+                            <option value="German">German</option>
+                            <option value="Greek">Greek</option>
+                            <option value="Gujarati">Gujarati</option>
+                            <option value="Haryanvi">Haryanvi</option>
+                            <option value="Hindi">Hindi</option>
+                            <option value="Hungarian">Hungarian</option>
+                            <option value="Icelandic">Icelandic</option>
+                            <option value="Indonesian">Indonesian</option>
+                            <option value="Irish">Irish</option>
+                            <option value="Italian">Italian</option>
+                            <option value="Japanese">Japanese</option>
+                            <option value="Javanese">Javanese</option>
+                            <option value="Kannada">Kannada</option>
+                            <option value="Kashmiri">Kashmiri</option>
+                            <option value="Kazakh">Kazakh</option>
+                            <option value="Konkani">Konkani</option>
+                            <option value="Korean">Korean</option>
+                            <option value="Kyrgyz">Kyrgyz</option>
+                            <option value="Latvian">Latvian</option>
+                            <option value="Lithuanian">Lithuanian</option>
+                            <option value="Macedonian">Macedonian</option>
+                            <option value="Maithili">Maithili</option>
+                            <option value="Malay">Malay</option>
+                            <option value="Maltese">Maltese</option>
+                            <option value="Mandarin Chinese">Mandarin Chinese</option>
+                            <option value="Marathi">Marathi</option>
+                            <option value="Marwari">Marwari</option>
+                            <option value="Min Nan">Min Nan</option>
+                            <option value="Moldovan">Moldovan</option>
+                            <option value="Mongolian">Mongolian</option>
+                            <option value="Montenegrin">Montenegrin</option>
+                            <option value="Nepali">Nepali</option>
+                            <option value="Norwegian">Norwegian</option>
+                            <option value="Oriya">Oriya</option>
+                            <option value="Pashto">Pashto</option>
+                            <option value="Persian (Farsi)">Persian (Farsi)</option>
+                            <option value="Polish">Polish</option>
+                            <option value="Portuguese">Portuguese</option>
+                            <option value="Punjabi">Punjabi</option>
+                            <option value="Rajasthani">Rajasthani</option>
+                            <option value="Romanian">Romanian</option>
+                            <option value="Russian">Russian</option>
+                            <option value="Sanskrit">Sanskrit</option>
+                            <option value="Santali">Santali</option>
+                            <option value="Serbian">Serbian</option>
+                            <option value="Sindhi">Sindhi</option>
+                            <option value="Sinhala">Sinhala</option>
+                            <option value="Slovak">Slovak</option>
+                            <option value="Slovene">Slovene</option>
+                            <option value="Slovenian">Slovenian</option>
+                            <option value="Spanish">Spanish</option>
+                            <option value="Swahili">Swahili</option>
+                            <option value="Swedish">Swedish</option>
+                            <option value="Tagalog">Tagalog</option>
+                            <option value="Tajik">Tajik</option>
+                            <option value="Tamil">Tamil</option>
+                            <option value="Tatar">Tatar</option>
+                            <option value="Telugu">Telugu</option>
+                            <option value="Thai">Thai</option>
+                            <option value="Turkish">Turkish</option>
+                            <option value="Turkmen">Turkmen</option>
+                            <option value="Ukrainian">Ukrainian</option>
+                            <option value="Urdu">Urdu</option>
+                            <option value="Uzbek">Uzbek</option>
+                            <option value="Vietnamese">Vietnamese</option>
+                            <option value="Welsh">Welsh</option>
+                            <option value="Wu">Wu</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="level">Your Current Level in Target Language:</label>
+                        <textarea id="level" name="level" placeholder="Describe your current level (e.g., beginner, can understand basic phrases, etc.)" rows="3"></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="interests">Your Interests:</label>
+                        <textarea id="interests" name="interests" placeholder="Tell us about your hobbies, interests, and what you like to do" rows="3"></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="education">Education/Work:</label>
+                        <textarea id="education" name="education" placeholder="Tell us about your education background or work" rows="3"></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="travel">Travel Experience:</label>
+                        <textarea id="travel" name="travel" placeholder="Where have you traveled? Any places you'd like to visit?" rows="3"></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="location">Where You Live:</label>
+                        <input type="text" id="location" name="location" placeholder="City, Country">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="api-key">OpenAI API Key:</label>
+                        <input type="password" id="api-key" name="apiKey" placeholder="Enter your OpenAI API key" required>
+                        <small>Your API key is stored locally in your browser and never sent to our servers. Get one at <a href="https://platform.openai.com/" target="_blank" rel="noopener noreferrer">https://platform.openai.com/</a>.</small>
+                    </div>
+                    
+                    <div class="advanced-section">
+                        <a href="#" id="advanced-toggle" style="color: #007bff; text-decoration: none; font-size: 14px;">
+                            ⚙️ Advanced LLM Settings
+                        </a>
+                        
+                        <div id="advanced-options" class="advanced-options" style="display: none; margin-top: 15px; padding: 15px; border: 1px solid #ddd; border-radius: 5px; background-color: #f8f9fa;">
+                            <div class="form-group">
+                                <label for="model-name">AI Model Name:</label>
+                                <input type="text" id="model-name" name="modelName" placeholder="gpt-4o-mini" value="gpt-4o-mini">
+                                <small>Default: gpt-4o-mini (you can use gpt-4, claude-3-5-sonnet, etc.)</small>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="api-endpoint">API Endpoint URL:</label>
+                                <input type="url" id="api-endpoint" name="apiEndpoint" placeholder="https://api.openai.com/v1/chat/completions" value="https://api.openai.com/v1/chat/completions">
+                                <small>Default: OpenAI endpoint (change for other providers like Anthropic, local models, etc.)</small>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="additional-system-prompt">Additional System Prompt:</label>
+                                <textarea id="additional-system-prompt" name="additionalSystemPrompt" placeholder="Any additional instructions to append to the system prompt..." rows="4"></textarea>
+                                <small>Optional: Add custom instructions that will be appended to the system prompt (e.g., specific teaching style, focus areas, etc.)</small>
+                            </div>
+                            
+                            <div class="form-group" style="text-align: center; margin-top: 15px;">
+                                <a href="#" id="view-system-prompt" style="color: #007bff; text-decoration: none; font-size: 14px;">
+                                    👁️ View Current System Prompt
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                
+                    <div id="conversation-history-container" style="text-align: center; margin-bottom: 15px; display: none;">
+                        <button id="view-conversation-history-btn" class="btn-secondary" type="button">📖 View Conversation History</button>
+                    </div>
+                
+                    <div id="clear-history-container" style="text-align: center; margin-bottom: 15px; display: none;">
+                        <button id="clear-history-btn" class="btn-secondary" type="button">🗑️ Clear Conversation History</button>
+                    </div>
+
+                    <button type="submit" class="btn-primary">Start Learning</button>
+                </form>
+                
+                
+                <div class="github-link" style="text-align: center; margin-top: 20px; font-size: 14px; color: #666;">
+                    <a href="https://github.com/sjoerdvanderhoorn/babbelaar" target="_blank" rel="noopener noreferrer" style="color: #007bff; text-decoration: none;">
+                        📃 View on GitHub
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chat Screen -->
+        <div id="chat-screen" class="screen hidden">
+            <div class="chat-header">
+                <h2>Babbelaar</h2>
+                <button id="profile-btn" class="btn-cog">⚙️</button>
+            </div>
+            
+            <div id="chat-container">
+                <div id="messages"></div>
+            </div>
+            
+            <div id="chat-input-container" class="chat-input-container">
+                <div id="suggested-words" class="suggested-words hidden"></div>
+                <div class="input-group">
+                    <textarea id="message-input" placeholder="Type your message..." rows="3"></textarea>
+                    <button id="send-btn" class="btn-primary">Send</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Translation Popup -->
+        <div id="translation-popup" class="popup hidden">
+            <div class="popup-content">
+                <span id="original-word"></span>
+                <span id="translated-word"></span>
+                <button id="close-popup">&times;</button>
+            </div>
+        </div>
+
+        <!-- System Prompt Modal -->
+        <div id="system-prompt-modal" class="popup hidden">
+            <div class="popup-content system-prompt-modal">
+                <div class="modal-header">
+                    <h3>Current System Prompt</h3>
+                    <button id="close-system-prompt-modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <pre id="system-prompt-text"></pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- Conversation History Modal -->
+        <div id="conversation-history-modal" class="popup hidden">
+            <div class="popup-content conversation-history-modal">
+                <div class="modal-header">
+                    <h3>Conversation History</h3>
+                    <button id="close-conversation-history-modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div id="conversation-history-content"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading Indicator -->
+        <div id="loading" class="loading hidden">
+            <div class="spinner"></div>
+            <p>Thinking...</p>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

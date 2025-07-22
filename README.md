@@ -1,8 +1,8 @@
 # Babbelaar - Language Learning Through Conversations
 
-Babbelaar is a language learning app that helps you learn a foreign language through personalized conversations with an AI teacher powered by OpenAI's ChatGPT.  
+Babbelaar is a language learning app that helps you learn a foreign language through personalized conversations with an AI teacher. By default, it uses a free LLM service courteously provided by [LLM7.io](https://llm7.io/), but you can also configure it to use OpenAI's ChatGPT with your own API key.
 
-This app runs completely in your browser, with no server-side component—your data stays local and only conversation messages are sent to the OpenAI API (bring your own key).
+This app runs completely in your browser, with no server-side component—your data stays local and only conversation messages are sent to the configured AI service.
 
 ## Try it Online
 
@@ -120,7 +120,8 @@ Or self-host it by downloading this repository: **[https://github.com/sjoerdvand
 
 ## Requirements
 
-- OpenAI API key (get one at https://platform.openai.com/)
+- **No setup required**: Works out of the box with the free LLM service provided by [LLM7.io](https://llm7.io/)
+- **Optional**: OpenAI API key for ChatGPT (get one at https://platform.openai.com/)
 - Alternative LLM providers are also supported, as long as they support the Chat Completions API.
 
 ## How It Works
@@ -134,14 +135,15 @@ Or self-host it by downloading this repository: **[https://github.com/sjoerdvand
 ## Technical Details
 
 - **Frontend**: Pure HTML, CSS, and JavaScript (no external libraries)
-- **AI Integration**: OpenAI Chat Completions API
+- **Default AI**: Free LLM service provided by [LLM7.io](https://llm7.io/)
+- **Optional AI**: OpenAI Chat Completions API and other compatible providers
 - **Storage**: Browser localStorage for profile and conversation history
 
 ## Privacy
 
 - All data is stored locally in your browser
-- Your API key is stored locally and never sent to our servers
-- Only your conversations are sent to OpenAI's API
+- Your API key (if used) is stored locally and never sent to our servers
+- Only your conversations are sent to the configured AI service (LLM7.io by default, or OpenAI if configured)
 - Future versions will support exporting data to cloud storage services
 
 ## Future Enhancements
@@ -155,9 +157,10 @@ Or self-host it by downloading this repository: **[https://github.com/sjoerdvand
 ## Troubleshooting
 
 **Can't send messages?**
-- Check your OpenAI API key
+- Try the default LLM7.io service first (no API key required)
+- If using OpenAI, check your API key
 - Ensure you have internet connection
-- Verify your API key has sufficient credits
+- If using OpenAI, verify your API key has sufficient credits
 
 **Translations not working?**
 - Make sure the conversation has started

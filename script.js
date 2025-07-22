@@ -75,6 +75,16 @@ class Babbelaar {
             this.toggleAdvancedSettings();
         });
 
+        // LLM7 preset button
+        document.getElementById('llm7-preset').addEventListener('click', () => {
+            this.setLLM7Preset();
+        });
+
+        // ChatGPT preset button
+        document.getElementById('chatgpt-preset').addEventListener('click', () => {
+            this.setChatGPTPreset();
+        });
+
         // Clear conversation history button
         document.getElementById('clear-history-btn').addEventListener('click', () => {
             this.clearConversationHistory();
@@ -160,12 +170,56 @@ class Babbelaar {
         }
     }
 
+    setLLM7Preset() {
+        // Set LLM7 defaults
+        document.getElementById('api-endpoint').value = 'https://api.llm7.io/v1/chat/completions';
+        document.getElementById('model-name').value = 'gpt-4.1-mini';
+        document.getElementById('api-key').value = 'unused';
+        
+        // The AI settings section is already visible since the buttons are inside it
+    }
+
+    setChatGPTPreset() {
+        // Set ChatGPT defaults
+        document.getElementById('api-endpoint').value = 'https://api.openai.com/v1/chat/completions';
+        document.getElementById('model-name').value = 'gpt-4o-mini';
+        document.getElementById('api-key').value = '';
+        
+        // The AI settings section is already visible since the buttons are inside it
+    }
+
     populateProfileForm() {
         const form = document.getElementById('profile-form');
+        
+        // If no profile exists, set defaults for new users
+        if (!this.profile) {
+            this.setDefaultValues();
+            return;
+        }
+        
+        // Populate form with existing profile data
         Object.keys(this.profile).forEach(key => {
             const element = form.elements[key];
             if (element) {
                 element.value = this.profile[key];
+            }
+        });
+        
+        // Set defaults for any missing values (for existing users upgrading)
+        this.setDefaultValues(true);
+    }
+
+    setDefaultValues(onlyMissing = false) {
+        const defaults = {
+            'api-endpoint': 'https://api.llm7.io/v1/chat/completions',
+            'model-name': 'gpt-4.1-mini',
+            'api-key': ''
+        };
+        
+        Object.keys(defaults).forEach(fieldId => {
+            const element = document.getElementById(fieldId);
+            if (element && (!onlyMissing || !element.value)) {
+                element.value = defaults[fieldId];
             }
         });
     }
@@ -280,7 +334,7 @@ class Babbelaar {
                     },
                     "explanation": {
                         "type": "string",
-                        "description": `Explanation in ${nativeLanguageName} about the corrected text.`
+                        "description": `Provide an explanation in ${nativeLanguageName} that clarifies the corrections made to the student's input.`
                     },
                     "reply": {
                         "type": "string",
@@ -296,7 +350,7 @@ class Babbelaar {
                     },
                     "translations": {
                         "type": "object",
-                        "description": `List every word from the message, reply, and suggested words in the target language, with translation to ${nativeLanguageName} for each, no matter how simple.`,
+                        "description": `List every word from the message, reply, and suggested words in the target language, with translation to ${nativeLanguageName} for each, no matter how simple. Split up the words by spaces, punctuation, and special characters. For example, if the message is "Hello, how are you?", the translations should include "Hello": "Hallo", "how": "wie", "are": "sind", "you": "du".`,
                         "additionalProperties": {
                             "type": "string"
                         }
@@ -306,15 +360,22 @@ class Babbelaar {
                 "additionalProperties": false
             };
 
-            const apiEndpoint = this.profile.apiEndpoint || 'https://api.openai.com/v1/chat/completions';
-            const modelName = this.profile.modelName || 'gpt-4o-mini';
+            const apiEndpoint = this.profile.apiEndpoint || 'https://api.llm7.io/v1/chat/completions';
+            const modelName = this.profile.modelName || 'gpt-4.1-mini';
+
+            // Prepare headers
+            const headers = {
+                'Content-Type': 'application/json'
+            };
+            
+            // Add Authorization header only if API key is provided
+            if (this.profile.apiKey && this.profile.apiKey.trim()) {
+                headers['Authorization'] = `Bearer ${this.profile.apiKey}`;
+            }
 
             const response = await fetch(apiEndpoint, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${this.profile.apiKey}`
-                },
+                headers: headers,
                 body: JSON.stringify({
                     model: modelName,
                     messages: messages,
@@ -339,9 +400,26 @@ class Babbelaar {
             const content = data.choices[0].message.content;
 
             let teacherResponse;
-            try {
-                teacherResponse = JSON.parse(content);
-            } catch (e) {
+
+            if (!teacherResponse) {
+                try {
+                    // Try to parse the content as JSON directly.
+                    teacherResponse = JSON.parse(content);
+                } catch (e) {
+                    // explicitly unhandled
+                }
+            }
+
+            if (!teacherResponse) {
+                try {
+                    // Try to parse JSON out of the content string before parsing. This is useful when the LLM responds with a JSON-like structure but not a valid JSON string, like "{"message": "Hello"} and some extra text" or "```json\n{"message": "Hello"}\n```".
+                    teacherResponse = JSON.parse(content.slice(content.indexOf('{'), content.lastIndexOf('}') + 1));
+                } catch (e) {
+                    // explicitly unhandled
+                }
+            }
+
+            if (!teacherResponse) {
                 // Fallback if JSON parsing fails
                 teacherResponse = {
                     message: studentMessage || "",
@@ -371,6 +449,8 @@ class Babbelaar {
         // Add new translations to the persistent library
         if (response.translations) {
             Object.keys(response.translations).forEach(word => {
+                if (word.trim() === '') return; // Skip empty words
+                if (word == null || word === undefined) return; // Skip null or undefined words
                 this.translationLibrary[word.toLowerCase()] = response.translations[word];
             });
             this.saveTranslationLibrary();
@@ -472,9 +552,21 @@ class Babbelaar {
         // Sort words by length (longest first) to avoid partial replacements
         const words = Object.keys(translations).sort((a, b) => b.length - a.length);
 
+        // Helper to escape HTML for attribute values
+        function escapeHtmlAttr(str) {
+            return str.replace(/&/g, '&amp;')
+                      .replace(/"/g, '&quot;')
+                      .replace(/'/g, '&#39;')
+                      .replace(/</g, '&lt;')
+                      .replace(/>/g, '&gt;');
+        }
+
         words.forEach(word => {
-            const regex = new RegExp(`\\b${word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi');
-            html = html.replace(regex, `<span class="clickable-word" data-word="${word.toLowerCase()}">$&</span>`);
+            const regex = new RegExp(`\\b${word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'giu');
+            html = html.replace(
+                regex,
+                `<span class="clickable-word" data-word="${escapeHtmlAttr(word.toLowerCase())}">$&</span>`
+            );
         });
 
         return html;
@@ -508,14 +600,15 @@ class Babbelaar {
 
         const hasConversations = this.conversations.length > 0;
         const conversationContext = hasConversations ? 
-            "\n\nPrevious conversation context: We have talked before, so you can reference our previous interactions when appropriate. Continue the conversation naturally." : 
-            "\n\nThis is our first conversation.";
+            "\n\nPrevious conversation context: We have talked before, so you can reference our previous interactions when appropriate. Continue the conversation naturally but in such a way that it feels like a new conversation with a fresh start and greeting." : 
+            "\n\nThis is our first conversation. Start with a simple greeting and tell something about yourself in a way that is engaging and relevant to my interests.";
 
         let systemPrompt = `I have a student in ${targetLanguageName} that wants to improve their conversational skills. Can you ${hasConversations ? 'continue our conversation' : 'start a conversation with me'} about one of the topics mentioned in my profile? It should ${hasConversations ? 'build on our previous discussions and' : ''} start simple. I want you to speak in ${targetLanguageName} but want you to provide explanations in my native language ${nativeLanguageName}. I'll try to respond in ${targetLanguageName} as best as I can, but sometimes ${nativeLanguageName} might slip in. Please correct that in your explanation without highlighting that it was wrong or ${nativeLanguageName}. Always reply in ${targetLanguageName}. Please also correct my responses.
 
-Student level: "${this.profile.level || 'beginner'}"
+Student current level: "${this.profile.level || 'beginner'}"
+Student target level: "${this.profile.targetLevel || 'conversational fluency'}"
 
-Make sure I quickly learn the words, expressions, and phrases needed in conversation, like "yes", "no", "I don't know", "I don't understand", "sorry", "can you say that differently", greetings, goodbye, thank you, etc. With each response, include a new word or phrase in both languages. Be very engaging and conversational, as if we were having a natural chat. Do not simply answer my questions, but rather engage in a conversation that helps me learn. Tell stories, facts, ask questions, and use examples to make it interesting.
+Make sure I quickly learn the words, expressions, and phrases needed in conversation, like "yes", "no", "I don't know", "I don't understand", "sorry", "can you say that differently", greetings, goodbye, thank you, etc. With each response, include a new word or phrase in both languages. Be very engaging and conversational, as if we were having a natural chat. Do not simply answer my questions, but rather engage in a conversation that helps me learn. Tell stories, facts, ask questions, and use examples to make it interesting. Keep in mind the student's target level and gradually progress towards that goal.
 
 My profile information:
 Name: ${this.profile.name}
@@ -768,16 +861,20 @@ Instructions for response:
     }
 
     updateClearHistoryButtonVisibility() {
-        const conversationHistoryContainer = document.getElementById('conversation-history-container');
-        const clearHistoryContainer = document.getElementById('clear-history-container');
+        const viewHistoryBtn = document.getElementById('view-conversation-history-btn');
+        const clearHistoryBtn = document.getElementById('clear-history-btn');
         
-        // Show buttons only if there are conversations to view/clear
-        if (this.conversations && this.conversations.length > 0) {
-            conversationHistoryContainer.style.display = 'block';
-            clearHistoryContainer.style.display = 'block';
-        } else {
-            conversationHistoryContainer.style.display = 'none';
-            clearHistoryContainer.style.display = 'none';
+        // Enable/disable buttons based on whether there are conversations
+        const hasConversations = this.conversations && this.conversations.length > 0;
+        
+        if (viewHistoryBtn) {
+            viewHistoryBtn.disabled = !hasConversations;
+            viewHistoryBtn.style.opacity = hasConversations ? '1' : '0.5';
+        }
+        
+        if (clearHistoryBtn) {
+            clearHistoryBtn.disabled = !hasConversations;
+            clearHistoryBtn.style.opacity = hasConversations ? '1' : '0.5';
         }
     }
 
@@ -785,7 +882,7 @@ Instructions for response:
         // Prompt user for confirmation
         const confirmed = confirm(
             'Are you sure you want to clear your conversation history?\n\n' +
-            'This will permanently delete all your previous conversations, but will keep your profile settings.\n\n' +
+            'This will permanently delete all your previous conversations and learned translations, but will keep your profile settings.\n\n' +
             'This action cannot be undone.'
         );
 
@@ -793,8 +890,13 @@ Instructions for response:
             // Clear conversations array
             this.conversations = [];
             
+            // Clear translation library
+            this.translationLibrary = {};
+            this.currentTranslations = {};
+            
             // Clear from localStorage
             localStorage.removeItem('babbelaar_conversations');
+            localStorage.removeItem('babbelaar_translation_library');
             
             // Clear the chat interface if we're currently on the chat screen
             const messagesContainer = document.getElementById('messages');

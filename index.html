@@ -227,8 +227,13 @@
                     </div>
                     
                     <div class="form-group">
-                        <label for="level">Your Current Level in Target Language:</label>
+                        <label for="level">Your Current Level:</label>
                         <textarea id="level" name="level" placeholder="Describe your current level (e.g., beginner, can understand basic phrases, etc.)" rows="3"></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="target-level">The Level You Want To Achieve:</label>
+                        <textarea id="target-level" name="targetLevel" placeholder="Describe your target level (e.g., conversational fluency, business level, native-like proficiency, being able to order food, etc.)" rows="3"></textarea>
                     </div>
                     
                     <div class="form-group">
@@ -251,28 +256,39 @@
                         <input type="text" id="location" name="location" placeholder="City, Country">
                     </div>
                     
-                    <div class="form-group">
-                        <label for="api-key">OpenAI API Key:</label>
-                        <input type="password" id="api-key" name="apiKey" placeholder="Enter your OpenAI API key" required>
-                        <small>Your API key is stored locally in your browser and never sent to our servers. Get one at <a href="https://platform.openai.com/" target="_blank" rel="noopener noreferrer">https://platform.openai.com/</a>.</small>
-                    </div>
-                    
                     <div class="advanced-section">
-                        <a href="#" id="advanced-toggle" style="color: #007bff; text-decoration: none; font-size: 14px;">
-                            ⚙️ Advanced LLM Settings
+                        <a href="#" id="advanced-toggle" style="color: #007bff; text-decoration: none; font-size: 14px; text-align: center;">
+                            ⚙️ Advanced Settings
                         </a>
                         
                         <div id="advanced-options" class="advanced-options" style="display: none; margin-top: 15px; padding: 15px; border: 1px solid #ddd; border-radius: 5px; background-color: #f8f9fa;">
-                            <div class="form-group">
-                                <label for="model-name">AI Model Name:</label>
-                                <input type="text" id="model-name" name="modelName" placeholder="gpt-4o-mini" value="gpt-4o-mini">
-                                <small>Default: gpt-4o-mini (you can use gpt-4, claude-3-5-sonnet, etc.)</small>
+                            <div class="ai-preset-section" style="margin-bottom: 20px;">
+                                <label style="display: block; margin-bottom: 10px; font-weight: 600;">Quick Setup:</label>
+                                <div class="preset-buttons" style="display: flex; gap: 10px; margin-bottom: 15px;">
+                                    <button type="button" id="llm7-preset" class="btn-secondary" style="flex: 1;">
+                                        🆓 Use LLM7 (free, rate limited)
+                                    </button>
+                                    <button type="button" id="chatgpt-preset" class="btn-secondary" style="flex: 1;">
+                                        🔑 Use ChatGPT (bring your own key)
+                                    </button>
+                                </div>
                             </div>
                             
                             <div class="form-group">
                                 <label for="api-endpoint">API Endpoint URL:</label>
-                                <input type="url" id="api-endpoint" name="apiEndpoint" placeholder="https://api.openai.com/v1/chat/completions" value="https://api.openai.com/v1/chat/completions">
-                                <small>Default: OpenAI endpoint (change for other providers like Anthropic, local models, etc.)</small>
+                                <input type="url" id="api-endpoint" name="apiEndpoint" placeholder="https://api.openai.com/v1/chat/completions" value="https://api.llm7.io/v1/chat/completions">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="model-name">Model Name:</label>
+                                <input type="text" id="model-name" name="modelName" placeholder="gpt-4.1-mini" value="gpt-4.1-mini">
+                                <small>Default: gpt-4.1-mini (you can use gpt-4, claude-3-5-sonnet, etc.)</small>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="api-key">API Key:</label>
+                                <input type="password" id="api-key" name="apiKey" placeholder="Enter your API key">
+                                <small>Your API key is stored locally in your browser and never sent to our servers.</small>
                             </div>
                             
                             <div class="form-group">
@@ -286,15 +302,16 @@
                                     👁️ View Current System Prompt
                                 </a>
                             </div>
+
+                            <div class="conversation-history-section" style="margin-top: 20px;">
+                                <label for="api-key">Conversation History</label>
+                                <div style="display: flex; gap: 10px; justify-content: left;">
+                                    <button id="view-conversation-history-btn" class="btn-secondary" type="button" style="flex: 1; max-width: 150px;">📖 View</button>
+                                    <button id="clear-history-btn" class="btn-secondary" type="button" style="flex: 1; max-width: 150px;">🗑️ Clear</button>
+                                </div>
+                            </div>
+
                         </div>
-                    </div>
-                
-                    <div id="conversation-history-container" style="text-align: center; margin-bottom: 15px; display: none;">
-                        <button id="view-conversation-history-btn" class="btn-secondary" type="button">📖 View Conversation History</button>
-                    </div>
-                
-                    <div id="clear-history-container" style="text-align: center; margin-bottom: 15px; display: none;">
-                        <button id="clear-history-btn" class="btn-secondary" type="button">🗑️ Clear Conversation History</button>
                     </div>
 
                     <button type="submit" class="btn-primary">Start Learning</button>

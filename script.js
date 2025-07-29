@@ -8,6 +8,9 @@ class Babbelaar {
         this.thinkingBubble = null;
         this.isWaitingForResponse = false;
         this.hasStartedConversation = false;
+        this.currentAudio = null;
+        this.audioQueue = [];
+        this.isPlayingAudio = false;
         this.init();
     }
 
@@ -101,6 +104,11 @@ class Babbelaar {
             this.showConversationHistoryModal();
         });
 
+        // TTS toggle
+        document.getElementById('use-tts').addEventListener('change', (e) => {
+            this.toggleTTSOptions(e.target.checked);
+        });
+
         // Close system prompt modal
         document.getElementById('close-system-prompt-modal').addEventListener('click', () => {
             this.hideSystemPromptModal();
@@ -139,6 +147,9 @@ class Babbelaar {
 
         if (this.profile) {
             this.populateProfileForm();
+        } else {
+            // Initialize TTS options visibility for new users
+            this.toggleTTSOptions(false);
         }
         
         // Update clear history button visibility
@@ -188,6 +199,15 @@ class Babbelaar {
         // The AI settings section is already visible since the buttons are inside it
     }
 
+    toggleTTSOptions(enabled) {
+        const ttsOptions = document.getElementById('tts-options');
+        if (enabled) {
+            ttsOptions.style.display = 'block';
+        } else {
+            ttsOptions.style.display = 'none';
+        }
+    }
+
     populateProfileForm() {
         const form = document.getElementById('profile-form');
         
@@ -201,19 +221,43 @@ class Babbelaar {
         Object.keys(this.profile).forEach(key => {
             const element = form.elements[key];
             if (element) {
-                element.value = this.profile[key];
+                if (element.type === 'checkbox') {
+                    element.checked = this.profile[key] === true || this.profile[key] === 'true';
+                } else {
+                    element.value = this.profile[key];
+                }
             }
         });
         
         // Set defaults for any missing values (for existing users upgrading)
         this.setDefaultValues(true);
+        
+        // Initialize TTS options visibility
+        const useTtsElement = document.getElementById('use-tts');
+        if (useTtsElement) {
+            this.toggleTTSOptions(useTtsElement.checked);
+        }
+        
+        // Set default checkbox values if not already set
+        if (!this.profile || this.profile.useTts === undefined) {
+            document.getElementById('use-tts').checked = false;
+        }
+        if (!this.profile || this.profile.autoPlayVoice === undefined) {
+            document.getElementById('auto-play-voice').checked = false;
+        }
     }
 
     setDefaultValues(onlyMissing = false) {
         const defaults = {
             'api-endpoint': 'https://api.llm7.io/v1/chat/completions',
             'model-name': 'gpt-4.1-mini',
-            'api-key': ''
+            'api-key': '',
+            'tts-endpoint': 'https://api.openai.com/v1/audio/speech',
+            'tts-model': 'gpt-4o-mini-tts',
+            'tts-api-key': '',
+            'tts-voice-corrected': 'coral',
+            'tts-voice-reply': 'sage',
+            'tts-instructions': 'Voice: Warm, empathetic, and professional, reassuring the customer that their issue is understood and will be resolved. Punctuation: Well-structured with natural pauses, allowing for clarity and a steady, calming flow. Delivery: Calm and patient, with a supportive and understanding tone that reassures the listener. Phrasing: Clear and concise, using customer-friendly language that avoids jargon while maintaining professionalism. Tone: Empathetic and solution-focused, emphasizing both understanding and proactive assistance.'
         };
         
         Object.keys(defaults).forEach(fieldId => {
@@ -226,7 +270,13 @@ class Babbelaar {
 
     saveProfile() {
         const formData = new FormData(document.getElementById('profile-form'));
-        this.profile = Object.fromEntries(formData.entries());
+        const profile = Object.fromEntries(formData.entries());
+        
+        // Handle checkboxes (they won't appear in FormData if unchecked)
+        profile.useTts = document.getElementById('use-tts').checked;
+        profile.autoPlayVoice = document.getElementById('auto-play-voice').checked;
+        
+        this.profile = profile;
 
         localStorage.setItem('babbelaar_profile', JSON.stringify(this.profile));
 
@@ -479,6 +529,38 @@ class Babbelaar {
 
         // Show suggested words
         this.showSuggestedWords(response.suggested || []);
+
+        // Auto-play audio if enabled
+        this.handleAutoPlayAudio(response, studentMessage, isFirstMessage);
+    }
+
+    async handleAutoPlayAudio(response, studentMessage, isFirstMessage) {
+        if (!this.profile.useTts || !this.profile.autoPlayVoice) {
+            return;
+        }
+
+        const audioQueue = [];
+
+        // Add corrected message audio if there's a correction and it's not the first message
+        if (!isFirstMessage && response.message && response.message.trim() !== studentMessage.trim()) {
+            const voiceCorrected = this.profile.ttsVoiceCorrected || 'coral';
+            const correctedAudio = await this.generateSpeech(response.message, voiceCorrected);
+            if (correctedAudio) {
+                audioQueue.push(correctedAudio);
+            }
+        }
+
+        // Add teacher reply audio
+        const voiceReply = this.profile.ttsVoiceReply || 'sage';
+        const replyAudio = await this.generateSpeech(response.reply, voiceReply);
+        if (replyAudio) {
+            audioQueue.push(replyAudio);
+        }
+
+        // Play audio sequentially
+        if (audioQueue.length > 0) {
+            await this.playSequentially(audioQueue);
+        }
     }
 
     addMessage(text, sender, translations = {}, suggested = []) {
@@ -503,6 +585,13 @@ class Babbelaar {
             bubbleDiv.innerHTML = this.makeWordsClickable(text, translations);
         } else {
             bubbleDiv.textContent = text;
+        }
+
+        // Add play button if TTS is enabled and this is a teacher message
+        if (this.profile.useTts && sender === 'teacher') {
+            const voiceReply = this.profile.ttsVoiceReply || 'sage';
+            const playButton = this.createPlayButton(text, voiceReply, 'teacher');
+            bubbleDiv.appendChild(playButton);
         }
 
         messageDiv.appendChild(bubbleDiv);
@@ -531,6 +620,13 @@ class Babbelaar {
             correctedBubble.innerHTML = this.makeWordsClickable(correctedText, this.translationLibrary);
         } else {
             correctedBubble.textContent = correctedText;
+        }
+
+        // Add play button if TTS is enabled
+        if (this.profile.useTts) {
+            const voiceCorrected = this.profile.ttsVoiceCorrected || 'coral';
+            const playButton = this.createPlayButton(correctedText, voiceCorrected, 'corrected');
+            correctedBubble.appendChild(playButton);
         }
 
         correctionDiv.appendChild(correctedBubble);
@@ -924,6 +1020,152 @@ Instructions for response:
             // Show success message
             alert('Conversation history has been cleared successfully!');
         }
+    }
+
+    async generateSpeech(text, voice = 'alloy') {
+        if (!this.profile.useTts || !text.trim()) {
+            return null;
+        }
+
+        try {
+            const ttsEndpoint = this.profile.ttsEndpoint || 'https://api.openai.com/v1/audio/speech';
+            const ttsModel = this.profile.ttsModel || 'gpt-4o-mini-tts';
+            const instructions = this.profile.ttsInstructions || '';
+
+            // Prepare headers
+            const headers = {
+                'Content-Type': 'application/json'
+            };
+            
+            // Add Authorization header - use dedicated TTS API key if available, otherwise fallback to main API key
+            const apiKey = this.profile.ttsApiKey || this.profile.apiKey;
+            if (apiKey && apiKey.trim()) {
+                headers['Authorization'] = `Bearer ${apiKey}`;
+            }
+
+            // Prepare request body
+            const requestBody = {
+                model: ttsModel,
+                input: text,
+                voice: voice,
+                response_format: 'mp3'
+            };
+
+            // Add instructions if provided
+            if (instructions.trim()) {
+                requestBody.instructions = instructions;
+            }
+
+            const response = await fetch(ttsEndpoint, {
+                method: 'POST',
+                headers: headers,
+                body: JSON.stringify(requestBody)
+            });
+
+            if (!response.ok) {
+                throw new Error(`TTS API request failed: ${response.status}`);
+            }
+
+            const audioBlob = await response.blob();
+            return URL.createObjectURL(audioBlob);
+        } catch (error) {
+            console.error('Error generating speech:', error);
+            return null;
+        }
+    }
+
+    async playAudio(audioUrl) {
+        if (!audioUrl) return;
+
+        return new Promise((resolve) => {
+            if (this.currentAudio) {
+                this.currentAudio.pause();
+                this.currentAudio = null;
+            }
+
+            const audio = new Audio(audioUrl);
+            this.currentAudio = audio;
+            this.isPlayingAudio = true;
+
+            audio.onended = () => {
+                this.isPlayingAudio = false;
+                this.currentAudio = null;
+                URL.revokeObjectURL(audioUrl);
+                resolve();
+            };
+
+            audio.onerror = () => {
+                this.isPlayingAudio = false;
+                this.currentAudio = null;
+                URL.revokeObjectURL(audioUrl);
+                resolve();
+            };
+
+            audio.play().catch((error) => {
+                console.error('Error playing audio:', error);
+                this.isPlayingAudio = false;
+                this.currentAudio = null;
+                URL.revokeObjectURL(audioUrl);
+                resolve();
+            });
+        });
+    }
+
+    stopAudio() {
+        if (this.currentAudio) {
+            this.currentAudio.pause();
+            this.currentAudio = null;
+            this.isPlayingAudio = false;
+        }
+    }
+
+    async playSequentially(audioQueue) {
+        for (const audioUrl of audioQueue) {
+            if (audioUrl) {
+                await this.playAudio(audioUrl);
+            }
+        }
+    }
+
+    createPlayButton(text, voice, containerId) {
+        const button = document.createElement('button');
+        button.className = 'play-button';
+        button.innerHTML = '▶';
+        button.title = 'Play audio';
+        
+        button.onclick = async (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            if (this.isPlayingAudio) {
+                this.stopAudio();
+                this.updateAllPlayButtons();
+                return;
+            }
+
+            // Update this button to show stop
+            button.className = 'stop-button';
+            button.innerHTML = '⏹';
+            button.title = 'Stop audio';
+            
+            const audioUrl = await this.generateSpeech(text, voice);
+            if (audioUrl) {
+                await this.playAudio(audioUrl);
+            }
+            
+            // Reset button after playing
+            this.updateAllPlayButtons();
+        };
+        
+        return button;
+    }
+
+    updateAllPlayButtons() {
+        document.querySelectorAll('.play-button, .stop-button').forEach(button => {
+            button.className = 'play-button';
+            button.innerHTML = '▶';
+            button.title = 'Play audio';
+        });
     }
 }
 

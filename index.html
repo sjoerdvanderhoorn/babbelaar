@@ -303,6 +303,57 @@
                                 </a>
                             </div>
 
+                            <div class="tts-section" style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #e2e8f0;">
+                                <div class="form-group">
+                                    <label>
+                                        <input type="checkbox" id="use-tts" name="useTts" style="width: auto; margin-right: 8px;">
+                                        Use Text-to-Speech
+                                    </label>
+                                </div>
+                                
+                                <div id="tts-options" style="display: none; margin-left: 20px;">
+                                    <div class="form-group">
+                                        <label>
+                                            <input type="checkbox" id="auto-play-voice" name="autoPlayVoice" style="width: auto; margin-right: 8px;">
+                                            Automatically Play Voice
+                                        </label>
+                                        <small>When enabled, voice will play automatically for corrected text and replies</small>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="tts-endpoint">TTS API Endpoint URL:</label>
+                                        <input type="url" id="tts-endpoint" name="ttsEndpoint" placeholder="https://api.openai.com/v1/audio/speech" value="https://api.openai.com/v1/audio/speech">
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="tts-model">TTS Model Name:</label>
+                                        <input type="text" id="tts-model" name="ttsModel" placeholder="gpt-4o-mini-tts" value="gpt-4o-mini-tts">
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="tts-api-key">TTS API Key:</label>
+                                        <input type="password" id="tts-api-key" name="ttsApiKey" placeholder="Enter your TTS API key">
+                                        <small>Your TTS API key is stored locally in your browser and never sent to our servers. Can be the same as your main API key.</small>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="tts-voice-corrected">Voice for Corrected Text:</label>
+                                        <input type="text" id="tts-voice-corrected" name="ttsVoiceCorrected" placeholder="coral" value="coral">
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="tts-voice-reply">Voice for Teacher Reply:</label>
+                                        <input type="text" id="tts-voice-reply" name="ttsVoiceReply" placeholder="sage" value="sage">
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="tts-instructions">Voice Instructions:</label>
+                                        <textarea id="tts-instructions" name="ttsInstructions" placeholder="Voice instructions..." rows="4">Voice: Warm, empathetic, and professional, reassuring the customer that their issue is understood and will be resolved. Punctuation: Well-structured with natural pauses, allowing for clarity and a steady, calming flow. Delivery: Calm and patient, with a supportive and understanding tone that reassures the listener. Phrasing: Clear and concise, using customer-friendly language that avoids jargon while maintaining professionalism. Tone: Empathetic and solution-focused, emphasizing both understanding and proactive assistance.</textarea>
+                                        <small>Instructions for how the voice should sound and be delivered</small>
+                                    </div>
+                                </div>
+                            </div>
+
                             <div class="conversation-history-section" style="margin-top: 20px;">
                                 <label for="api-key">Conversation History</label>
                                 <div style="display: flex; gap: 10px; justify-content: left;">

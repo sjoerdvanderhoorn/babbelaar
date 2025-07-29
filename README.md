@@ -18,6 +18,7 @@ Or self-host it by downloading this repository: **[https://github.com/sjoerdvand
 - **Suggested Words**: Get helpful word suggestions during conversations
 - **Progress Tracking**: All conversations are saved locally in your browser and can be used in continued conversations
 - **Correction & Feedback**: The AI teacher corrects your messages and provides explanations
+- **Text-to-Speech**: Listen to corrected text and teacher replies with configurable voices (requires OpenAI API key)
 
 ## Supported Languages
 
@@ -148,7 +149,6 @@ Or self-host it by downloading this repository: **[https://github.com/sjoerdvand
 
 ## Future Enhancements
 
-- Text-to-speech (TTS) for pronunciation
 - Speech recognition for voice input
 - Export/import profile and conversation data
 - Cloud storage integration (OneDrive, Dropbox)

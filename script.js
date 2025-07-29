@@ -16,6 +16,8 @@ class Babbelaar {
         this.mediaRecorder = null;
         this.audioChunks = [];
         this.isRecording = false;
+        this.microphoneStream = null;
+        this.microphonePermissionGranted = false;
         this.init();
     }
 
@@ -154,6 +156,11 @@ class Babbelaar {
                 this.adjustChatContainerPadding();
             }, 100);
         });
+
+        // Clean up microphone stream when page is about to unload
+        window.addEventListener('beforeunload', () => {
+            this.cleanupMicrophone();
+        });
     }
 
     showProfileScreen() {
@@ -231,8 +238,12 @@ class Babbelaar {
         if (sttOptions) {
             if (enabled) {
                 sttOptions.style.display = 'block';
+                // Initialize microphone when STT is enabled
+                this.initializeMicrophone();
             } else {
                 sttOptions.style.display = 'none';
+                // Clean up microphone when STT is disabled
+                this.cleanupMicrophone();
             }
         }
         
@@ -1467,6 +1478,38 @@ Instructions for response:
         return languageMap[languageName] || 'en'; // Default to English if language not found
     }
 
+    async initializeMicrophone() {
+        if (this.microphoneStream || this.microphonePermissionGranted) {
+            return true; // Already initialized
+        }
+
+        try {
+            this.microphoneStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            this.microphonePermissionGranted = true;
+            return true;
+        } catch (error) {
+            console.error('Error accessing microphone:', error);
+            let errorMessage = 'Could not access microphone. ';
+            if (error.name === 'NotAllowedError') {
+                errorMessage += 'Please allow microphone access and try again.';
+            } else if (error.name === 'NotFoundError') {
+                errorMessage += 'No microphone found on your device.';
+            } else {
+                errorMessage += 'Please check your microphone settings and try again.';
+            }
+            alert(errorMessage);
+            return false;
+        }
+    }
+
+    cleanupMicrophone() {
+        if (this.microphoneStream) {
+            this.microphoneStream.getTracks().forEach(track => track.stop());
+            this.microphoneStream = null;
+            this.microphonePermissionGranted = false;
+        }
+    }
+
     async toggleSpeechRecognition() {
         if (!this.profile.useStt) {
             return;
@@ -1480,9 +1523,14 @@ Instructions for response:
     }
 
     async startRecording() {
+        // Ensure microphone is initialized
+        const microphoneReady = await this.initializeMicrophone();
+        if (!microphoneReady) {
+            this.resetRecordingUI();
+            return;
+        }
+
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            
             // Check for MediaRecorder support and audio format compatibility
             const options = [];
             if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
@@ -1493,7 +1541,7 @@ Instructions for response:
                 options.push({ mimeType: 'audio/mp4' });
             }
             
-            this.mediaRecorder = new MediaRecorder(stream, options[0] || {});
+            this.mediaRecorder = new MediaRecorder(this.microphoneStream, options[0] || {});
             this.audioChunks = [];
             this.isRecording = true;
 
@@ -1514,23 +1562,14 @@ Instructions for response:
                 const audioBlob = new Blob(this.audioChunks, { type: mimeType });
                 await this.transcribeAudio(audioBlob);
                 
-                // Clean up
-                stream.getTracks().forEach(track => track.stop());
+                // Don't stop the stream - keep it alive for future recordings
                 this.resetRecordingUI();
             };
 
             this.mediaRecorder.start();
         } catch (error) {
             console.error('Error starting recording:', error);
-            let errorMessage = 'Could not access microphone. ';
-            if (error.name === 'NotAllowedError') {
-                errorMessage += 'Please allow microphone access and try again.';
-            } else if (error.name === 'NotFoundError') {
-                errorMessage += 'No microphone found on your device.';
-            } else {
-                errorMessage += 'Please check your microphone settings and try again.';
-            }
-            alert(errorMessage);
+            alert('Error starting recording. Please try again.');
             this.resetRecordingUI();
         }
     }

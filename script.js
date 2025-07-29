@@ -11,6 +11,8 @@ class Babbelaar {
         this.currentAudio = null;
         this.audioQueue = [];
         this.isPlayingAudio = false;
+        this.currentPlayingButton = null;
+        this.loadingButtons = new Set();
         this.init();
     }
 
@@ -539,26 +541,101 @@ class Babbelaar {
             return;
         }
 
+        // Wait longer for DOM to update before finding buttons
+        await new Promise(resolve => setTimeout(resolve, 200));
+
         const audioQueue = [];
 
-        // Add corrected message audio if there's a correction and it's not the first message
+        // First, generate corrected message audio if there's a correction and it's not the first message
         if (!isFirstMessage && response.message && response.message.trim() !== studentMessage.trim()) {
             const voiceCorrected = this.profile.ttsVoiceCorrected || 'coral';
-            const correctedAudio = await this.generateSpeech(response.message, voiceCorrected);
-            if (correctedAudio) {
-                audioQueue.push(correctedAudio);
+            // Find the corrected message button - try multiple selectors to be more robust
+            let correctedButton = document.querySelector('.message.correction:last-of-type .play-button');
+            
+            // If not found, try alternative selector
+            if (!correctedButton) {
+                const correctionMessages = document.querySelectorAll('.message.correction');
+                if (correctionMessages.length > 0) {
+                    const lastCorrection = correctionMessages[correctionMessages.length - 1];
+                    correctedButton = lastCorrection.querySelector('.play-button');
+                }
+            }
+            
+            console.log('Corrected button found:', correctedButton); // Debug log
+            
+            if (correctedButton) {
+                // Show loading state
+                correctedButton.className = 'loading-button';
+                correctedButton.innerHTML = '<span class="hourglass">⏳</span>';
+                correctedButton.title = 'Loading audio...';
+                correctedButton.disabled = true;
+                
+                const correctedAudio = await this.generateSpeech(response.message, voiceCorrected);
+                if (correctedAudio) {
+                    audioQueue.push({ url: correctedAudio, button: correctedButton });
+                } else {
+                    // Reset button on error
+                    correctedButton.className = 'play-button';
+                    correctedButton.innerHTML = '▶';
+                    correctedButton.title = 'Play audio';
+                    correctedButton.disabled = false;
+                }
+            } else {
+                console.log('Corrected message button not found in DOM'); // Debug log
             }
         }
 
-        // Add teacher reply audio
+        // Then, generate teacher reply audio
         const voiceReply = this.profile.ttsVoiceReply || 'sage';
-        const replyAudio = await this.generateSpeech(response.reply, voiceReply);
-        if (replyAudio) {
-            audioQueue.push(replyAudio);
+        // Find the teacher message button - try multiple selectors to be more robust
+        let teacherButton = document.querySelector('.message.teacher:last-of-type .play-button');
+        
+        // If not found, try alternative selector
+        if (!teacherButton) {
+            const teacherMessages = document.querySelectorAll('.message.teacher');
+            if (teacherMessages.length > 0) {
+                const lastTeacher = teacherMessages[teacherMessages.length - 1];
+                teacherButton = lastTeacher.querySelector('.play-button');
+            }
+        }
+        
+        console.log('Teacher button found:', teacherButton); // Debug log
+        
+        if (teacherButton) {
+            // Show loading state
+            teacherButton.className = 'loading-button';
+            teacherButton.innerHTML = '<span class="hourglass">⏳</span>';
+            teacherButton.title = 'Loading audio...';
+            teacherButton.disabled = true;
+            
+            const replyAudio = await this.generateSpeech(response.reply, voiceReply);
+            if (replyAudio) {
+                audioQueue.push({ url: replyAudio, button: teacherButton });
+            } else {
+                // Reset button on error
+                teacherButton.className = 'play-button';
+                teacherButton.innerHTML = '▶';
+                teacherButton.title = 'Play audio';
+                teacherButton.disabled = false;
+            }
+        } else {
+            console.log('Teacher message button not found in DOM'); // Debug log
         }
 
-        // Play audio sequentially
+        console.log('Audio queue length:', audioQueue.length); // Debug log
+
+        // Play audio sequentially - corrected text first, then teacher reply
         if (audioQueue.length > 0) {
+            // Reset loading states before playing
+            audioQueue.forEach(audioData => {
+                if (audioData.button) {
+                    audioData.button.className = 'play-button';
+                    audioData.button.innerHTML = '▶';
+                    audioData.button.title = 'Play audio';
+                    audioData.button.disabled = false;
+                }
+            });
+            
             await this.playSequentially(audioQueue);
         }
     }
@@ -587,14 +664,15 @@ class Babbelaar {
             bubbleDiv.textContent = text;
         }
 
+        messageDiv.appendChild(bubbleDiv);
+
         // Add play button if TTS is enabled and this is a teacher message
         if (this.profile.useTts && sender === 'teacher') {
             const voiceReply = this.profile.ttsVoiceReply || 'sage';
             const playButton = this.createPlayButton(text, voiceReply, 'teacher');
-            bubbleDiv.appendChild(playButton);
+            messageDiv.appendChild(playButton);
         }
 
-        messageDiv.appendChild(bubbleDiv);
         messagesContainer.appendChild(messageDiv);
     }
 
@@ -622,16 +700,24 @@ class Babbelaar {
             correctedBubble.textContent = correctedText;
         }
 
-        // Add play button if TTS is enabled
+        // Create a container for the button and bubble (button on the left for corrections)
+        const bubbleContainer = document.createElement('div');
+        bubbleContainer.style.display = 'flex';
+        bubbleContainer.style.alignItems = 'flex-end';
+        bubbleContainer.style.gap = '8px';
+        bubbleContainer.style.justifyContent = 'flex-end'; // Align to the right like other student messages
+
+        // Add play button if TTS is enabled (on the left side for corrections)
         if (this.profile.useTts) {
             const voiceCorrected = this.profile.ttsVoiceCorrected || 'coral';
             const playButton = this.createPlayButton(correctedText, voiceCorrected, 'corrected');
-            correctedBubble.appendChild(playButton);
+            bubbleContainer.appendChild(playButton);
         }
 
-        correctionDiv.appendChild(correctedBubble);
+        bubbleContainer.appendChild(correctedBubble);
+        correctionDiv.appendChild(bubbleContainer);
 
-        // Add explanation if provided
+        // Add explanation if provided (on a separate line)
         if (explanation && explanation.trim()) {
             const explanationDiv = document.createElement('div');
             explanationDiv.className = 'explanation';
@@ -1074,7 +1160,7 @@ Instructions for response:
         }
     }
 
-    async playAudio(audioUrl) {
+    async playAudio(audioUrl, playingButton = null) {
         if (!audioUrl) return;
 
         return new Promise((resolve) => {
@@ -1086,18 +1172,44 @@ Instructions for response:
             const audio = new Audio(audioUrl);
             this.currentAudio = audio;
             this.isPlayingAudio = true;
+            this.currentPlayingButton = playingButton;
+
+            // Update button to show it's playing
+            if (playingButton) {
+                playingButton.className = 'stop-button';
+                playingButton.innerHTML = '⏹';
+                playingButton.title = 'Stop audio';
+            }
 
             audio.onended = () => {
                 this.isPlayingAudio = false;
                 this.currentAudio = null;
+                this.currentPlayingButton = null;
                 URL.revokeObjectURL(audioUrl);
+                
+                // Reset button
+                if (playingButton) {
+                    playingButton.className = 'play-button';
+                    playingButton.innerHTML = '▶';
+                    playingButton.title = 'Play audio';
+                }
+                
                 resolve();
             };
 
             audio.onerror = () => {
                 this.isPlayingAudio = false;
                 this.currentAudio = null;
+                this.currentPlayingButton = null;
                 URL.revokeObjectURL(audioUrl);
+                
+                // Reset button
+                if (playingButton) {
+                    playingButton.className = 'play-button';
+                    playingButton.innerHTML = '▶';
+                    playingButton.title = 'Play audio';
+                }
+                
                 resolve();
             };
 
@@ -1105,7 +1217,16 @@ Instructions for response:
                 console.error('Error playing audio:', error);
                 this.isPlayingAudio = false;
                 this.currentAudio = null;
+                this.currentPlayingButton = null;
                 URL.revokeObjectURL(audioUrl);
+                
+                // Reset button
+                if (playingButton) {
+                    playingButton.className = 'play-button';
+                    playingButton.innerHTML = '▶';
+                    playingButton.title = 'Play audio';
+                }
+                
                 resolve();
             });
         });
@@ -1117,12 +1238,20 @@ Instructions for response:
             this.currentAudio = null;
             this.isPlayingAudio = false;
         }
+        
+        // Reset the currently playing button
+        if (this.currentPlayingButton) {
+            this.currentPlayingButton.className = 'play-button';
+            this.currentPlayingButton.innerHTML = '▶';
+            this.currentPlayingButton.title = 'Play audio';
+            this.currentPlayingButton = null;
+        }
     }
 
     async playSequentially(audioQueue) {
-        for (const audioUrl of audioQueue) {
-            if (audioUrl) {
-                await this.playAudio(audioUrl);
+        for (const audioData of audioQueue) {
+            if (audioData && audioData.url) {
+                await this.playAudio(audioData.url, audioData.button);
             }
         }
     }
@@ -1137,35 +1266,52 @@ Instructions for response:
             e.preventDefault();
             e.stopPropagation();
             
-            if (this.isPlayingAudio) {
+            // If this button is currently playing, stop it
+            if (this.currentPlayingButton === button) {
                 this.stopAudio();
-                this.updateAllPlayButtons();
                 return;
             }
-
-            // Update this button to show stop
-            button.className = 'stop-button';
-            button.innerHTML = '⏹';
-            button.title = 'Stop audio';
             
-            const audioUrl = await this.generateSpeech(text, voice);
-            if (audioUrl) {
-                await this.playAudio(audioUrl);
+            // If any other audio is playing, stop it first
+            if (this.isPlayingAudio) {
+                this.stopAudio();
             }
+
+            // Show loading state
+            button.className = 'loading-button';
+            button.innerHTML = '<span class="hourglass">⏳</span>';
+            button.title = 'Loading audio...';
+            button.disabled = true;
+            this.loadingButtons.add(button);
             
-            // Reset button after playing
-            this.updateAllPlayButtons();
+            try {
+                const audioUrl = await this.generateSpeech(text, voice);
+                if (audioUrl) {
+                    // Remove loading state
+                    this.loadingButtons.delete(button);
+                    button.disabled = false;
+                    
+                    await this.playAudio(audioUrl, button);
+                } else {
+                    // Reset button on error
+                    this.loadingButtons.delete(button);
+                    button.className = 'play-button';
+                    button.innerHTML = '▶';
+                    button.title = 'Play audio';
+                    button.disabled = false;
+                }
+            } catch (error) {
+                // Reset button on error
+                this.loadingButtons.delete(button);
+                button.className = 'play-button';
+                button.innerHTML = '▶';
+                button.title = 'Play audio';
+                button.disabled = false;
+                console.error('Error generating speech:', error);
+            }
         };
         
         return button;
-    }
-
-    updateAllPlayButtons() {
-        document.querySelectorAll('.play-button, .stop-button').forEach(button => {
-            button.className = 'play-button';
-            button.innerHTML = '▶';
-            button.title = 'Play audio';
-        });
     }
 }
 

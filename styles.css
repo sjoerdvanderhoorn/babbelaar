@@ -200,25 +200,29 @@ small {
     animation: fadeIn 0.3s ease;
     position: relative;
     z-index: 10;
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+}
+
+.message.teacher {
+    justify-content: flex-start;
+}
+
+.message.student {
+    justify-content: flex-end;
+}
+
+.message.correction {
+    display: flex;
+    flex-direction: column;
+    margin-top: -15px;
+    margin-bottom: 10px;
 }
 
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
-}
-
-.message.teacher {
-    text-align: left;
-}
-
-.message.student {
-    text-align: right;
-}
-
-.message.correction {
-    text-align: right;
-    margin-top: -15px;
-    margin-bottom: 10px;
 }
 
 .message-bubble {
@@ -262,28 +266,28 @@ small {
     background-color: rgba(102, 126, 234, 0.2);
 }
 
-.play-button, .stop-button {
-    background: rgba(102, 126, 234, 0.1);
+.play-button, .stop-button, .loading-button {
+    background: rgba(102, 126, 234, 0.9);
     border: 1px solid rgba(102, 126, 234, 0.3);
     border-radius: 50%;
-    width: 24px;
-    height: 24px;
+    width: 32px;
+    height: 32px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     transition: all 0.2s ease;
-    font-size: 12px;
-    margin-left: 8px;
-    vertical-align: middle;
-    position: relative;
-    top: -1px;
+    font-size: 14px;
+    color: white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    flex-shrink: 0;
 }
 
 .play-button:hover, .stop-button:hover {
-    background: rgba(102, 126, 234, 0.2);
+    background: rgba(102, 126, 234, 1);
     border-color: rgba(102, 126, 234, 0.5);
     transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .play-button:active, .stop-button:active {
@@ -291,13 +295,33 @@ small {
 }
 
 .stop-button {
-    background: rgba(220, 53, 69, 0.1);
+    background: rgba(220, 53, 69, 0.9);
     border-color: rgba(220, 53, 69, 0.3);
 }
 
 .stop-button:hover {
-    background: rgba(220, 53, 69, 0.2);
+    background: rgba(220, 53, 69, 1);
     border-color: rgba(220, 53, 69, 0.5);
+}
+
+.loading-button {
+    background: rgba(108, 117, 125, 0.9);
+    border-color: rgba(108, 117, 125, 0.3);
+    cursor: not-allowed;
+}
+
+.loading-button:hover {
+    transform: none;
+}
+
+/* Hourglass animation */
+.hourglass {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
 }
 
 .explanation {

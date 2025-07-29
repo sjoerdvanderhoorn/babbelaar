@@ -281,6 +281,12 @@ small {
     color: white;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
     flex-shrink: 0;
+    line-height: 1;
+    padding: 0;
+    /* Remove margin auto for better icon centering */
+    margin-top: 0;
+    margin-bottom: 0;
+    align-self: center;
 }
 
 .play-button:hover, .stop-button:hover {

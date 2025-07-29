@@ -354,6 +354,41 @@
                                 </div>
                             </div>
 
+                            <div class="stt-section" style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #e2e8f0;">
+                                <div class="form-group">
+                                    <label>
+                                        <input type="checkbox" id="use-stt" name="useStt" style="width: auto; margin-right: 8px;">
+                                        Use Speech-to-Text
+                                    </label>
+                                </div>
+                                
+                                <div id="stt-options" style="display: none; margin-left: 20px;">
+                                    <div class="form-group">
+                                        <label>
+                                            <input type="checkbox" id="auto-send-speech" name="autoSendSpeech" style="width: auto; margin-right: 8px;">
+                                            Automatically Send Recognized Text
+                                        </label>
+                                        <small>When enabled, recognized speech will be sent immediately as a message.</small>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="stt-endpoint">STT API Endpoint URL:</label>
+                                        <input type="url" id="stt-endpoint" name="sttEndpoint" placeholder="https://api.openai.com/v1/audio/transcriptions" value="https://api.openai.com/v1/audio/transcriptions">
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="stt-model">STT Model Name:</label>
+                                        <input type="text" id="stt-model" name="sttModel" placeholder="whisper-1" value="whisper-1">
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="stt-api-key">STT API Key:</label>
+                                        <input type="password" id="stt-api-key" name="sttApiKey" placeholder="Enter your STT API key">
+                                        <small>Your STT API key is stored locally in your browser and never sent to our servers. Can be the same as your main API key.<br>If left empty, the main API key will be used as fallback.</small>
+                                    </div>
+                                </div>
+                            </div>
+
                             <div class="conversation-history-section" style="margin-top: 20px;">
                                 <label for="api-key">Conversation History</label>
                                 <div style="display: flex; gap: 10px; justify-content: left;">
@@ -392,6 +427,7 @@
                 <div id="suggested-words" class="suggested-words hidden"></div>
                 <div class="input-group">
                     <textarea id="message-input" placeholder="Type your message..." rows="3"></textarea>
+                    <button id="mic-btn" class="btn-mic" title="Speech to Text">🎤</button>
                     <button id="send-btn" class="btn-primary">Send</button>
                 </div>
             </div>

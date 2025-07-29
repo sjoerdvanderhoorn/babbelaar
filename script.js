@@ -13,6 +13,9 @@ class Babbelaar {
         this.isPlayingAudio = false;
         this.currentPlayingButton = null;
         this.loadingButtons = new Set();
+        this.mediaRecorder = null;
+        this.audioChunks = [];
+        this.isRecording = false;
         this.init();
     }
 
@@ -111,6 +114,16 @@ class Babbelaar {
             this.toggleTTSOptions(e.target.checked);
         });
 
+        // STT toggle
+        document.getElementById('use-stt').addEventListener('change', (e) => {
+            this.toggleSTTOptions(e.target.checked);
+        });
+
+        // Microphone button
+        document.getElementById('mic-btn').addEventListener('click', () => {
+            this.toggleSpeechRecognition();
+        });
+
         // Close system prompt modal
         document.getElementById('close-system-prompt-modal').addEventListener('click', () => {
             this.hideSystemPromptModal();
@@ -162,6 +175,9 @@ class Babbelaar {
         document.getElementById('profile-screen').classList.add('hidden');
         document.getElementById('chat-screen').classList.remove('hidden');
         
+        // Initialize microphone button visibility based on STT settings
+        this.toggleSTTOptions(this.profile && this.profile.useStt);
+        
         // Adjust padding after the screen is shown
         setTimeout(() => {
             this.adjustChatContainerPadding();
@@ -210,6 +226,23 @@ class Babbelaar {
         }
     }
 
+    toggleSTTOptions(enabled) {
+        const sttOptions = document.getElementById('stt-options');
+        if (sttOptions) {
+            if (enabled) {
+                sttOptions.style.display = 'block';
+            } else {
+                sttOptions.style.display = 'none';
+            }
+        }
+        
+        // Show/hide microphone button in chat screen
+        const micBtn = document.getElementById('mic-btn');
+        if (micBtn) {
+            micBtn.style.display = enabled ? 'flex' : 'none';
+        }
+    }
+
     populateProfileForm() {
         const form = document.getElementById('profile-form');
         
@@ -240,12 +273,24 @@ class Babbelaar {
             this.toggleTTSOptions(useTtsElement.checked);
         }
         
+        // Initialize STT options visibility
+        const useSttElement = document.getElementById('use-stt');
+        if (useSttElement) {
+            this.toggleSTTOptions(useSttElement.checked);
+        }
+        
         // Set default checkbox values if not already set
         if (!this.profile || this.profile.useTts === undefined) {
             document.getElementById('use-tts').checked = false;
         }
         if (!this.profile || this.profile.autoPlayVoice === undefined) {
             document.getElementById('auto-play-voice').checked = false;
+        }
+        if (!this.profile || this.profile.useStt === undefined) {
+            document.getElementById('use-stt').checked = false;
+        }
+        if (!this.profile || this.profile.autoSendSpeech === undefined) {
+            document.getElementById('auto-send-speech').checked = false;
         }
     }
 
@@ -259,7 +304,10 @@ class Babbelaar {
             'tts-api-key': '',
             'tts-voice-corrected': 'coral',
             'tts-voice-reply': 'sage',
-            'tts-instructions': 'Voice: Warm, empathetic, and professional, reassuring the customer that their issue is understood and will be resolved. Punctuation: Well-structured with natural pauses, allowing for clarity and a steady, calming flow. Delivery: Calm and patient, with a supportive and understanding tone that reassures the listener. Phrasing: Clear and concise, using customer-friendly language that avoids jargon while maintaining professionalism. Tone: Empathetic and solution-focused, emphasizing both understanding and proactive assistance.'
+            'tts-instructions': 'Voice: Warm, empathetic, and professional, reassuring the customer that their issue is understood and will be resolved. Punctuation: Well-structured with natural pauses, allowing for clarity and a steady, calming flow. Delivery: Calm and patient, with a supportive and understanding tone that reassures the listener. Phrasing: Clear and concise, using customer-friendly language that avoids jargon while maintaining professionalism. Tone: Empathetic and solution-focused, emphasizing both understanding and proactive assistance.',
+            'stt-endpoint': 'https://api.openai.com/v1/audio/transcriptions',
+            'stt-model': 'whisper-1',
+            'stt-api-key': ''
         };
         
         Object.keys(defaults).forEach(fieldId => {
@@ -277,6 +325,8 @@ class Babbelaar {
         // Handle checkboxes (they won't appear in FormData if unchecked)
         profile.useTts = document.getElementById('use-tts').checked;
         profile.autoPlayVoice = document.getElementById('auto-play-voice').checked;
+        profile.useStt = document.getElementById('use-stt').checked;
+        profile.autoSendSpeech = document.getElementById('auto-send-speech').checked;
         
         this.profile = profile;
 
@@ -1312,6 +1362,267 @@ Instructions for response:
         };
         
         return button;
+    }
+
+    getLanguageCode(languageName) {
+        const languageMap = {
+            'Albanian': 'sq',
+            'Arabic': 'ar',
+            'Armenian': 'hy',
+            'Awadhi': 'awa',
+            'Azerbaijani': 'az',
+            'Bashkir': 'ba',
+            'Basque': 'eu',
+            'Belarusian': 'be',
+            'Bengali': 'bn',
+            'Bhojpuri': 'bho',
+            'Bosnian': 'bs',
+            'Brazilian Portuguese': 'pt',
+            'Bulgarian': 'bg',
+            'Cantonese (Yue)': 'yue',
+            'Catalan': 'ca',
+            'Chhattisgarhi': 'hne',
+            'Chinese': 'zh',
+            'Croatian': 'hr',
+            'Czech': 'cs',
+            'Danish': 'da',
+            'Dogri': 'doi',
+            'Dutch': 'nl',
+            'English': 'en',
+            'Estonian': 'et',
+            'Faroese': 'fo',
+            'Finnish': 'fi',
+            'French': 'fr',
+            'Galician': 'gl',
+            'Georgian': 'ka',
+            'German': 'de',
+            'Greek': 'el',
+            'Gujarati': 'gu',
+            'Haryanvi': 'bgc',
+            'Hindi': 'hi',
+            'Hungarian': 'hu',
+            'Icelandic': 'is',
+            'Indonesian': 'id',
+            'Irish': 'ga',
+            'Italian': 'it',
+            'Japanese': 'ja',
+            'Javanese': 'jv',
+            'Kannada': 'kn',
+            'Kashmiri': 'ks',
+            'Kazakh': 'kk',
+            'Konkani': 'kok',
+            'Korean': 'ko',
+            'Kyrgyz': 'ky',
+            'Latvian': 'lv',
+            'Lithuanian': 'lt',
+            'Macedonian': 'mk',
+            'Maithili': 'mai',
+            'Malay': 'ms',
+            'Maltese': 'mt',
+            'Mandarin Chinese': 'zh',
+            'Marathi': 'mr',
+            'Marwari': 'mwr',
+            'Min Nan': 'nan',
+            'Moldovan': 'ro',
+            'Mongolian': 'mn',
+            'Montenegrin': 'cnr',
+            'Nepali': 'ne',
+            'Norwegian': 'no',
+            'Oriya': 'or',
+            'Pashto': 'ps',
+            'Persian (Farsi)': 'fa',
+            'Polish': 'pl',
+            'Portuguese': 'pt',
+            'Punjabi': 'pa',
+            'Rajasthani': 'raj',
+            'Romanian': 'ro',
+            'Russian': 'ru',
+            'Sanskrit': 'sa',
+            'Santali': 'sat',
+            'Serbian': 'sr',
+            'Sindhi': 'sd',
+            'Sinhala': 'si',
+            'Slovak': 'sk',
+            'Slovene': 'sl',
+            'Slovenian': 'sl',
+            'Spanish': 'es',
+            'Swahili': 'sw',
+            'Swedish': 'sv',
+            'Tagalog': 'tl',
+            'Tajik': 'tg',
+            'Tamil': 'ta',
+            'Tatar': 'tt',
+            'Telugu': 'te',
+            'Thai': 'th',
+            'Turkish': 'tr',
+            'Turkmen': 'tk',
+            'Ukrainian': 'uk',
+            'Urdu': 'ur',
+            'Uzbek': 'uz',
+            'Vietnamese': 'vi',
+            'Welsh': 'cy',
+            'Wu': 'wuu'
+        };
+        
+        return languageMap[languageName] || 'en'; // Default to English if language not found
+    }
+
+    async toggleSpeechRecognition() {
+        if (!this.profile.useStt) {
+            return;
+        }
+
+        if (this.isRecording) {
+            this.stopRecording();
+        } else {
+            await this.startRecording();
+        }
+    }
+
+    async startRecording() {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            
+            // Check for MediaRecorder support and audio format compatibility
+            const options = [];
+            if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
+                options.push({ mimeType: 'audio/webm;codecs=opus' });
+            } else if (MediaRecorder.isTypeSupported('audio/webm')) {
+                options.push({ mimeType: 'audio/webm' });
+            } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
+                options.push({ mimeType: 'audio/mp4' });
+            }
+            
+            this.mediaRecorder = new MediaRecorder(stream, options[0] || {});
+            this.audioChunks = [];
+            this.isRecording = true;
+
+            const micBtn = document.getElementById('mic-btn');
+            const messageInput = document.getElementById('message-input');
+            
+            micBtn.classList.add('recording');
+            micBtn.textContent = '⏹️';
+            messageInput.disabled = true;
+            messageInput.placeholder = 'Recording... Click the stop button when finished';
+
+            this.mediaRecorder.ondataavailable = (event) => {
+                this.audioChunks.push(event.data);
+            };
+
+            this.mediaRecorder.onstop = async () => {
+                const mimeType = this.mediaRecorder.mimeType || 'audio/webm';
+                const audioBlob = new Blob(this.audioChunks, { type: mimeType });
+                await this.transcribeAudio(audioBlob);
+                
+                // Clean up
+                stream.getTracks().forEach(track => track.stop());
+                this.resetRecordingUI();
+            };
+
+            this.mediaRecorder.start();
+        } catch (error) {
+            console.error('Error starting recording:', error);
+            let errorMessage = 'Could not access microphone. ';
+            if (error.name === 'NotAllowedError') {
+                errorMessage += 'Please allow microphone access and try again.';
+            } else if (error.name === 'NotFoundError') {
+                errorMessage += 'No microphone found on your device.';
+            } else {
+                errorMessage += 'Please check your microphone settings and try again.';
+            }
+            alert(errorMessage);
+            this.resetRecordingUI();
+        }
+    }
+
+    stopRecording() {
+        if (this.mediaRecorder && this.isRecording) {
+            this.mediaRecorder.stop();
+            this.isRecording = false;
+        }
+    }
+
+    resetRecordingUI() {
+        const micBtn = document.getElementById('mic-btn');
+        const messageInput = document.getElementById('message-input');
+        
+        micBtn.classList.remove('recording');
+        micBtn.textContent = '🎤';
+        messageInput.disabled = false;
+        messageInput.placeholder = 'Type your message...';
+        this.isRecording = false;
+    }
+
+    async transcribeAudio(audioBlob) {
+        const messageInput = document.getElementById('message-input');
+        messageInput.placeholder = 'Transcribing speech...';
+
+        try {
+            const formData = new FormData();
+            
+            // Convert blob to appropriate format for OpenAI API
+            const fileName = audioBlob.type.includes('webm') ? 'audio.webm' : 'audio.wav';
+            formData.append('file', audioBlob, fileName);
+            formData.append('model', this.profile.sttModel || 'whisper-1');
+            formData.append('response_format', 'text');
+            
+            // Use the target language from user's profile for better accuracy
+            const languageCode = this.getLanguageCode(this.profile.targetLanguage);
+            formData.append('language', languageCode); // Supplying the input language in ISO-639-1 format improves accuracy and latency
+
+            const apiKey = this.profile.sttApiKey || this.profile.apiKey;
+            const endpoint = this.profile.sttEndpoint || 'https://api.openai.com/v1/audio/transcriptions';
+
+            if (!apiKey) {
+                throw new Error('No API key provided for speech-to-text');
+            }
+
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${apiKey}`
+                },
+                body: formData
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+            }
+
+            const transcription = await response.text();
+            const trimmedTranscription = transcription.trim();
+
+            if (trimmedTranscription) {
+                messageInput.value = trimmedTranscription;
+                
+                // Auto-send if enabled
+                if (this.profile.autoSendSpeech) {
+                    this.sendMessage();
+                } else {
+                    messageInput.focus();
+                }
+            } else {
+                messageInput.placeholder = 'No speech detected. Try speaking more clearly.';
+                setTimeout(() => {
+                    messageInput.placeholder = 'Type your message...';
+                }, 3000);
+            }
+        } catch (error) {
+            console.error('Error transcribing audio:', error);
+            let errorMessage = 'Error transcribing speech. ';
+            if (error.message.includes('401')) {
+                errorMessage += 'Invalid API key.';
+            } else if (error.message.includes('429')) {
+                errorMessage += 'Rate limit exceeded. Please try again later.';
+            } else {
+                errorMessage += 'Please try again.';
+            }
+            messageInput.placeholder = errorMessage;
+            setTimeout(() => {
+                messageInput.placeholder = 'Type your message...';
+            }, 3000);
+        }
     }
 }
 

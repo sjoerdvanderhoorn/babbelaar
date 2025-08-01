@@ -438,6 +438,7 @@ class Babbelaar {
 
             const nativeLanguageName = this.profile.nativeLanguage;
             const targetLanguageName = this.profile.targetLanguage;
+            
             const responseSchema = {
                 "type": "object",
                 "properties": {
@@ -447,11 +448,11 @@ class Babbelaar {
                     },
                     "explanation": {
                         "type": "string",
-                        "description": `Provide an explanation in ${nativeLanguageName} that clarifies the corrections made to the student's input.`
+                        "description": `Provide an explanation in ${nativeLanguageName} that clarifies the corrections made to the student's input. The explanation needs to be in ${nativeLanguageName}.`
                     },
                     "reply": {
                         "type": "string",
-                        "description": `Your response in ${targetLanguageName}`
+                        "description": `Your response in ${targetLanguageName}.`
                     },
                     "suggested": {
                         "type": "array",
@@ -463,7 +464,8 @@ class Babbelaar {
                     },
                     "translations": {
                         "type": "object",
-                        "description": `List every word from the message, reply, and suggested words in the target language, with translation to ${nativeLanguageName} for each, no matter how simple. Split up the words by spaces, punctuation, and special characters. For example, if the message is "Hello, how are you?", the translations should include "Hello": "Hallo", "how": "wie", "are": "sind", "you": "du".`,
+                        "description": `List every individual word from the message, reply, and suggested words in ${targetLanguageName}, with translation to ${nativeLanguageName} for each, no matter how simple.`,
+                        //  Split up the words by spaces, punctuation, and special characters. For example, if the message is "Hello, how are you?", the translations should include "Hello": "Hallo", "how": "wie", "are": "sind", "you": "du".
                         "additionalProperties": {
                             "type": "string"
                         }
@@ -512,6 +514,8 @@ class Babbelaar {
             const data = await response.json();
             const content = data.choices[0].message.content;
 
+            console.log('Teacher response content:', content); // Debug log
+
             let teacherResponse;
 
             if (!teacherResponse) {
@@ -530,6 +534,26 @@ class Babbelaar {
                 } catch (e) {
                     // explicitly unhandled
                 }
+            }
+
+            // Additional fallback: parse plain text with "message:", "explanation:", "reply:"
+            if (!teacherResponse) {
+                // Use regex to extract message, explanation, and reply
+                const regexMessage = /message:\s*([^\n]*)/i;
+                const regexExplanation = /explanation:\s*([^\n]*)/i;
+                const regexReply = /reply:\s*([^\n]*)/i;
+
+                const messageMatch = content.match(regexMessage);
+                const explanationMatch = content.match(regexExplanation);
+                const replyMatch = content.match(regexReply);
+
+                teacherResponse = {
+                    message: messageMatch ? messageMatch[1].trim() : (studentMessage || ""),
+                    explanation: explanationMatch ? explanationMatch[1].trim() : "",
+                    reply: replyMatch ? replyMatch[1].trim() : content,
+                    suggested: [],
+                    translations: {}
+                };
             }
 
             if (!teacherResponse) {
@@ -622,8 +646,6 @@ class Babbelaar {
                 }
             }
             
-            console.log('Corrected button found:', correctedButton); // Debug log
-            
             if (correctedButton) {
                 // Show loading state
                 correctedButton.className = 'loading-button';
@@ -641,8 +663,6 @@ class Babbelaar {
                     correctedButton.title = 'Play audio';
                     correctedButton.disabled = false;
                 }
-            } else {
-                console.log('Corrected message button not found in DOM'); // Debug log
             }
         }
 
@@ -659,8 +679,6 @@ class Babbelaar {
                 teacherButton = lastTeacher.querySelector('.play-button');
             }
         }
-        
-        console.log('Teacher button found:', teacherButton); // Debug log
         
         if (teacherButton) {
             // Show loading state
@@ -679,11 +697,7 @@ class Babbelaar {
                 teacherButton.title = 'Play audio';
                 teacherButton.disabled = false;
             }
-        } else {
-            console.log('Teacher message button not found in DOM'); // Debug log
         }
-
-        console.log('Audio queue length:', audioQueue.length); // Debug log
 
         // Play audio sequentially - corrected text first, then teacher reply
         if (audioQueue.length > 0) {
@@ -846,17 +860,17 @@ class Babbelaar {
             "\n\nPrevious conversation context: We have talked before, so you can reference our previous interactions when appropriate. Continue the conversation naturally but in such a way that it feels like a new conversation with a fresh start and greeting." : 
             "\n\nThis is our first conversation. Start with a simple greeting and tell something about yourself in a way that is engaging and relevant to my interests.";
 
-        let systemPrompt = `I have a student in ${targetLanguageName} that wants to improve their conversational skills. Can you ${hasConversations ? 'continue our conversation' : 'start a conversation with me'} about one of the topics mentioned in my profile? It should ${hasConversations ? 'build on our previous discussions and' : ''} start simple. I want you to speak in ${targetLanguageName} but want you to provide explanations in my native language ${nativeLanguageName}. I'll try to respond in ${targetLanguageName} as best as I can, but sometimes ${nativeLanguageName} might slip in. Please correct that in your explanation without highlighting that it was wrong or ${nativeLanguageName}. Always reply in ${targetLanguageName}. Please also correct my responses.
+        let systemPrompt = `You are a teacher and have a student that wants to improve their conversational skills in ${targetLanguageName}. Can you ${hasConversations ? 'continue the conversation' : 'start a conversation'} about one of the topics mentioned in my profile? It should ${hasConversations ? 'build on our previous discussions and' : ''} start simple. I want you to speak in ${targetLanguageName} but want you to provide explanations in my native language ${nativeLanguageName}. I'll try to respond in ${targetLanguageName} as best as I can, but sometimes ${nativeLanguageName} might slip in. Please correct that in your explanation without highlighting that it was wrong or ${nativeLanguageName}. Always reply in ${targetLanguageName}. Please also correct my responses.
 
 Student current level: "${this.profile.level || 'beginner'}"
 Student target level: "${this.profile.targetLevel || 'conversational fluency'}"
 
-Make sure I quickly learn the words, expressions, and phrases needed in conversation, like "yes", "no", "I don't know", "I don't understand", "sorry", "can you say that differently", greetings, goodbye, thank you, etc. With each response, include a new word or phrase in both languages. Be very engaging and conversational, as if we were having a natural chat. Do not simply answer my questions, but rather engage in a conversation that helps me learn. Tell stories, facts, ask questions, and use examples to make it interesting. Keep in mind the student's target level and gradually progress towards that goal.
+Make sure I quickly learn the words, expressions, and phrases needed in conversation, like "yes", "no", "I don't know", "I don't understand", "sorry", "can you say that differently", greetings, goodbye, thank you, etc. With each response, include a list of translations of all words in both languages. Be very engaging and conversational, as if we were having a natural chat. Do not simply answer my questions, but rather engage in a conversation that helps me learn. Tell stories, facts, ask questions, and use examples to make it interesting. Keep in mind the student's target level and gradually progress towards that goal.
 
 My profile information:
 Name: ${this.profile.name}
 Native language: ${nativeLanguageName}
-Target language: ${targetLanguageName}
+Language I want to learn: ${targetLanguageName}
 Interests: ${this.profile.interests}
 Education/Work: ${this.profile.education}
 Travel: ${this.profile.travel}
@@ -865,11 +879,11 @@ Location: ${this.profile.location}${conversationContext}
 Today is ${new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}.
 
 Instructions for response:
-- "message": Provide a corrected version of my input in the target language (if I made mistakes). When I used ${nativeLanguageName} in my response, translate it into ${targetLanguageName}.
-- "explanation": Explain the corrections in ${nativeLanguageName}. Do not mention that I made mistakes, just provide the corrected version and explain why it is correct.
+- "message": Provide a corrected version of my input in ${targetLanguageName} (if I made mistakes). When I used ${nativeLanguageName} in my response, translate it into ${targetLanguageName}.
+- "explanation": Explain any corrections to my message in ${nativeLanguageName}. Do not mention that I made mistakes, just provide the corrected version and explain why it is correct. The explanation should be in ${nativeLanguageName}.
 - "reply": Your conversational response in ${targetLanguageName}. This should be engaging and relevant to the conversation.
-- "suggested": Five useful words for my next response, preferably words not already used in our prior conversation. For example, when the last reply was 'Hello, how are you?', suggest words like 'good', 'fine', 'thanks'.
-- "translations": Every word from message, reply, and suggested words with ${nativeLanguageName} translations.`;
+- "suggested": Five useful words in ${targetLanguageName} that are relevant for my potential next response, preferably words not already used in our prior conversation. For example, when the last reply was 'Hello, how are you?', suggest words like 'good', 'fine', 'thanks'.
+- "translations": A list of every word in ${targetLanguageName} from message, reply, and suggested words with a ${nativeLanguageName} translation.`;
 
         // Append additional system prompt if provided
         if (this.profile.additionalSystemPrompt && this.profile.additionalSystemPrompt.trim()) {

@@ -1,4 +1,4 @@
-class Babbelaar {
+class Kwekken {
     constructor() {
         this.profile = null;
         this.conversations = [];
@@ -341,23 +341,23 @@ class Babbelaar {
         
         this.profile = profile;
 
-        localStorage.setItem('babbelaar_profile', JSON.stringify(this.profile));
+        localStorage.setItem('kwekken_profile', JSON.stringify(this.profile));
 
         this.showChatScreen();
     }
 
     loadProfile() {
-        const saved = localStorage.getItem('babbelaar_profile');
+        const saved = localStorage.getItem('kwekken_profile');
         if (saved) {
             this.profile = JSON.parse(saved);
         }
 
-        const savedConversations = localStorage.getItem('babbelaar_conversations');
+        const savedConversations = localStorage.getItem('kwekken_conversations');
         if (savedConversations) {
             this.conversations = JSON.parse(savedConversations);
         }
 
-        const savedTranslations = localStorage.getItem('babbelaar_translation_library');
+        const savedTranslations = localStorage.getItem('kwekken_translation_library');
         if (savedTranslations) {
             this.translationLibrary = JSON.parse(savedTranslations);
         }
@@ -1107,14 +1107,14 @@ Instructions for response:
     }
 
     saveConversations() {
-        localStorage.setItem('babbelaar_conversations', JSON.stringify(this.conversations));
+        localStorage.setItem('kwekken_conversations', JSON.stringify(this.conversations));
         
         // Update clear history button visibility in case this is the first conversation
         this.updateClearHistoryButtonVisibility();
     }
 
     saveTranslationLibrary() {
-        localStorage.setItem('babbelaar_translation_library', JSON.stringify(this.translationLibrary));
+        localStorage.setItem('kwekken_translation_library', JSON.stringify(this.translationLibrary));
     }
 
     updateClearHistoryButtonVisibility() {
@@ -1152,8 +1152,8 @@ Instructions for response:
             this.currentTranslations = {};
             
             // Clear from localStorage
-            localStorage.removeItem('babbelaar_conversations');
-            localStorage.removeItem('babbelaar_translation_library');
+            localStorage.removeItem('kwekken_conversations');
+            localStorage.removeItem('kwekken_translation_library');
             
             // Clear the chat interface if we're currently on the chat screen
             const messagesContainer = document.getElementById('messages');
@@ -1681,7 +1681,7 @@ Instructions for response:
 
 // Initialize app when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    const app = new Babbelaar();
+    const app = new Kwekken();
 
     // Handle word clicks for translations
     document.addEventListener('click', (e) => {

@@ -1,14 +1,14 @@
-# Babbelaar - Language Learning Through Conversations
+# Kwekken - Language Learning Through Conversations
 
-Babbelaar is a language learning app that helps you learn a foreign language through personalized conversations with an AI teacher. By default, it uses a free LLM service courteously provided by [LLM7.io](https://llm7.io/), but you can also configure it to use OpenAI's ChatGPT with your own API key.
+Kwekken is a language learning app that helps you learn a foreign language through personalized conversations with an AI teacher. By default, it uses a free LLM service courteously provided by [LLM7.io](https://llm7.io/), but you can also configure it to use OpenAI's ChatGPT with your own API key.
 
 This app runs completely in your browser, with no server-side component—your data stays local and only conversation messages are sent to the configured AI service.
 
 ## Try it Online
 
-You can try Babbelaar online at: **[https://www.babbelaar.com/](https://www.babbelaar.com/)**
+You can try Kwekken online at: **[https://www.kwekken.com/](https://www.kwekken.com/)**
 
-Or self-host it by downloading this repository: **[https://github.com/sjoerdvanderhoorn/babbelaar](https://github.com/sjoerdvanderhoorn/babbelaar)**
+Or self-host it by downloading this repository: **[https://github.com/sjoerdvanderhoorn/kwekken](https://github.com/sjoerdvanderhoorn/kwekken)**
 
 ## Features
 
